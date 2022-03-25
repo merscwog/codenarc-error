@@ -1,0 +1,33 @@
+plugins {
+    id 'groovy'
+    id 'codenarc'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    //implementation 'org.apache.groovy:groovy:4.0.1'
+    implementation 'org.codehaus.groovy:groovy:3.0.9'
+}
+
+codenarc {
+    config = rootProject.resources.text.fromFile('CodeNarcRules.groovy')
+    toolVersion = '3.0.0'
+}
+
+if (! project.hasProperty('disableCompilationClasspath')) {
+    tasks.withType(CodeNarc) { CodeNarc codeNarc ->
+        SourceSetContainer sourceSetContainer = codeNarc.project.sourceSets
+        SourceSet main = sourceSetContainer.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
+        SourceSet test = sourceSetContainer.getByName(SourceSet.TEST_SOURCE_SET_NAME)
+
+        FileCollection totalCompilationClasspath = main.compileClasspath + main.output
+        if (codeNarc.name.contains('Test')) {
+            totalCompilationClasspath = test.compileClasspath + test.output
+        }
+
+        codeNarc.compilationClasspath = totalCompilationClasspath
+    }
+}
